@@ -20,7 +20,7 @@ Una aplicación web moderna para la gestión de reservas y torneos de padel, des
 - **Fetch API** - Para comunicación con el backend
 - **localStorage** - Para persistencia de datos del usuario
 
-## 📋 Prerrequisitos
+## 📋 Prerequisitos
 
 Antes de comenzar, asegúrate de tener instalado:
 
