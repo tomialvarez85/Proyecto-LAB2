@@ -144,23 +144,7 @@ const Reservas = () => {
         Bienvenido, {usuario.user?.nombre || usuario.nombre || usuario.name || 'Usuario'}
       </p>
       
-      {/* Debug: Mostrar datos del usuario */}
-      <div style={{
-        marginBottom: '20px',
-        padding: '10px',
-        backgroundColor: '#f8f9fa',
-        border: '1px solid #dee2e6',
-        borderRadius: '4px',
-        fontSize: '12px'
-      }}>
-        <strong>Debug - Datos del usuario:</strong>
-        <pre style={{ margin: '5px 0', fontSize: '11px', overflow: 'auto' }}>
-          {JSON.stringify(usuario, null, 2)}
-        </pre>
-        <p style={{ margin: '5px 0', fontSize: '11px' }}>
-          <strong>ID encontrado:</strong> {usuario.user?.id || usuario.id || usuario.user_id || usuario.usuario_id || usuario.ID || usuario.userId || 'NO ENCONTRADO'}
-        </p>
-      </div>
+      
       
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '15px' }}>

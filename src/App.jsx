@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import Navbar from './components/Navbar'
 import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
 import Reservas from './components/Reservas'
@@ -128,8 +129,10 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <Routes>
+    <div>
+      <Navbar />
+      <div className="container page">
+        <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/reservas" element={usuario ? <Reservas /> : <Navigate to="/login" replace />} />
@@ -139,7 +142,8 @@ function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/" element={<HomeProtected />} />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </div>
     </div>
   )
 }

@@ -61,137 +61,34 @@ const LoginForm = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto', padding: '20px' }}>
-      <h2>Iniciar Sesión</h2>
-      
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label htmlFor="email" style={{ display: 'block', marginBottom: '5px' }}>
-            Email:
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '16px'
-            }}
-          />
+    <div style={{ maxWidth: '420px', margin: '0 auto' }}>
+      <div className="card" style={{ padding: 24 }}>
+        <h2 style={{ marginTop: 0, marginBottom: 6 }}>Iniciar Sesión</h2>
+        <p className="muted" style={{ marginTop: 0 }}>Accedé para gestionar reservas y torneos.</p>
+        <form onSubmit={handleSubmit} className="form" style={{ marginTop: 12 }}>
+          <div>
+            <label htmlFor="email" className="label">Email</label>
+            <input type="email" id="email" name="email" value={formData.email} onChange={handleInputChange} required className="input" />
+          </div>
+          <div>
+            <label htmlFor="password" className="label">Contraseña</label>
+            <input type="password" id="password" name="password" value={formData.password} onChange={handleInputChange} required className="input" />
+          </div>
+          <button type="submit" disabled={loading} className="btn btn-primary btn-block">
+            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+          </button>
+        </form>
+        <div className="divider" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span className="muted">¿No tienes una cuenta?</span>
+          <button type="button" onClick={() => navigate('/register')} className="btn btn-success">Crear cuenta</button>
         </div>
-
-        <div style={{ marginBottom: '15px' }}>
-          <label htmlFor="password" style={{ display: 'block', marginBottom: '5px' }}>
-            Contraseña:
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            required
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '16px'
-            }}
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: '100%',
-            padding: '10px',
-            backgroundColor: loading ? '#ccc' : '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '16px',
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-        </button>
-      </form>
-
-      <div style={{ 
-        marginTop: '15px', 
-        textAlign: 'center',
-        padding: '10px',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '4px'
-      }}>
-        <p style={{ margin: '0 0 10px 0', color: '#666' }}>
-          ¿No tienes una cuenta?
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate('/register')}
-          style={{
-            backgroundColor: '#28a745',
-            color: 'white',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '4px',
-            fontSize: '14px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#218838';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = '#28a745';
-          }}
-        >
-          Crear Cuenta
-        </button>
+        {message && (
+          <div className={`alert ${message.includes('exitoso') ? 'alert-success' : 'alert-danger'}`} style={{ marginTop: 16 }}>
+            {message}
+          </div>
+        )}
       </div>
-
-      {message && (
-        <div style={{
-          marginTop: '15px',
-          padding: '10px',
-          backgroundColor: message.includes('exitoso') ? '#d4edda' : '#f8d7da',
-          color: message.includes('exitoso') ? '#155724' : '#721c24',
-          border: `1px solid ${message.includes('exitoso') ? '#c3e6cb' : '#f5c6cb'}`,
-          borderRadius: '4px'
-        }}>
-          {message}
-        </div>
-      )}
-
-      {userData && (
-        <div style={{
-          marginTop: '20px',
-          padding: '15px',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #dee2e6',
-          borderRadius: '4px'
-        }}>
-          <h3>Datos del Usuario:</h3>
-          <pre style={{ 
-            backgroundColor: '#fff',
-            padding: '10px',
-            borderRadius: '4px',
-            overflow: 'auto',
-            fontSize: '14px'
-          }}>
-            {JSON.stringify(userData, null, 2)}
-          </pre>
-        </div>
-      )}
     </div>
   );
 };

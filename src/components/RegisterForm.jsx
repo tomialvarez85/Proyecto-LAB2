@@ -195,26 +195,7 @@ const RegisterForm = ({ onRegisterSuccess }) => {
         </div>
       )}
 
-      {userData && (
-        <div style={{
-          marginTop: '20px',
-          padding: '15px',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #dee2e6',
-          borderRadius: '4px'
-        }}>
-          <h3>Datos del Usuario Registrado:</h3>
-          <pre style={{ 
-            backgroundColor: '#fff',
-            padding: '10px',
-            borderRadius: '4px',
-            overflow: 'auto',
-            fontSize: '14px'
-          }}>
-            {JSON.stringify(userData, null, 2)}
-          </pre>
-        </div>
-      )}
+      
     </div>
   );
 };
