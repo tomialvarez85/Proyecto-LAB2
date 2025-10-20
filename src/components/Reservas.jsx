@@ -9,6 +9,15 @@ const Reservas = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [usuario, setUsuario] = useState(null);
+  
+  // Fecha local de hoy en formato YYYY-MM-DD (sin UTC)
+  const todayLocalStr = (() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  })();
 
   // Lista fija de canchas con sus IDs
   const canchas = [
@@ -158,7 +167,7 @@ const Reservas = () => {
             value={formData.fecha}
             onChange={handleInputChange}
             required
-            min={new Date().toISOString().split('T')[0]}
+            min={todayLocalStr}
             style={{
               width: '100%',
               padding: '8px',

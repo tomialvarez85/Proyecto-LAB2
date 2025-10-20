@@ -129,12 +129,11 @@ const MisReservas = () => {
   // Función para formatear la fecha
   const formatearFecha = (fecha) => {
     try {
-      const fechaObj = new Date(fecha);
-      return fechaObj.toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      // Parsear YYYY-MM-DD como fecha local sin cambio de zona horaria
+      const [y, m, d] = String(fecha).split('-').map(Number);
+      if (!y || !m || !d) return fecha;
+      const fechaObj = new Date(y, m - 1, d);
+      return fechaObj.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
     } catch (error) {
       return fecha;
     }

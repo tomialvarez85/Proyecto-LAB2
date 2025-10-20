@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import TorneosAdmin from './admin/torneos/TorneosAdmin';
 
 const AdminPanel = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -310,12 +311,10 @@ const AdminPanel = () => {
 
   const formatearFecha = (fecha) => {
     try {
-      const fechaObj = new Date(fecha);
-      return fechaObj.toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      const [y, m, d] = String(fecha).split('-').map(Number);
+      if (!y || !m || !d) return fecha;
+      const fechaObj = new Date(y, m - 1, d);
+      return fechaObj.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
     } catch (error) {
       return fecha;
     }
@@ -626,6 +625,12 @@ const AdminPanel = () => {
             </table>
           </div>
         )}
+      </div>
+
+      {/* Nueva Sección: Torneos */}
+      <div style={{ marginBottom: '40px' }}>
+        <h3 style={{ color: '#0ea5e9', marginBottom: '15px' }}>🏟️ Torneos</h3>
+        <TorneosAdmin />
       </div>
 
       {/* Mensajes de estado */}
