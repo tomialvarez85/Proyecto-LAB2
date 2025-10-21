@@ -533,8 +533,15 @@ const PartidosSection = () => {
   const [torneos, setTorneos] = useState([]);
   const [torneoId, setTorneoId] = useState('');
   const [partidos, setPartidos] = useState([]);
-  const [loading, setLoading] = useState({ torneos: true, partidos: false });
+  const [parejas, setParejas] = useState([]);
+  const [loading, setLoading] = useState({ torneos: true, partidos: false, parejas: true });
   const [message, setMessage] = useState('');
+  
+  // Estados para el modal de edición
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [partidoSeleccionado, setPartidoSeleccionado] = useState(null);
+  const [sets, setSets] = useState([]);
+  const [guardando, setGuardando] = useState(false);
 
   const cargarTorneos = async () => {
     try {
@@ -549,6 +556,23 @@ const PartidosSection = () => {
     }
   };
 
+  const cargarParejas = async () => {
+    try {
+      setLoading(prev => ({ ...prev, parejas: true }));
+      const res = await fetch(API_BASE + 'parejas.php');
+      const data = await res.json();
+      if (data.status === 'ok') {
+        setParejas(data.parejas || []);
+        console.log('Parejas cargadas:', data.parejas);
+      }
+    } catch (error) {
+      console.error('Error al cargar parejas:', error);
+      setMessage('Error al cargar parejas');
+    } finally {
+      setLoading(prev => ({ ...prev, parejas: false }));
+    }
+  };
+
   const cargarPartidos = async (id) => {
     if (!id) return;
     try {
@@ -560,18 +584,24 @@ const PartidosSection = () => {
       
       if (data.status === 'ok') {
         console.log('Partidos cargados:', data.partidos);
+        
+        // Debug detallado de la estructura de cada partido
         if (data.partidos && data.partidos.length > 0) {
-          console.log('Estructura del primer partido:', data.partidos[0]);
-          console.log('Campos disponibles en partido:', Object.keys(data.partidos[0]));
-          
-          // Debug específico para resultados
+          console.log('=== DEBUG ESTRUCTURA PARTIDOS ===');
           data.partidos.forEach((partido, index) => {
-            console.log(`Partido ${index + 1} - ID: ${partido.id}`);
-            console.log(`  resultado_pareja1: "${partido.resultado_pareja1}" (tipo: ${typeof partido.resultado_pareja1})`);
-            console.log(`  resultado_pareja2: "${partido.resultado_pareja2}" (tipo: ${typeof partido.resultado_pareja2})`);
-            console.log(`  ganador_id: "${partido.ganador_id}" (tipo: ${typeof partido.ganador_id})`);
+            console.log(`Partido ${index + 1} (ID: ${partido.id}):`);
+            console.log('  Campos disponibles:', Object.keys(partido));
+            console.log('  jugador1a:', partido.jugador1a);
+            console.log('  jugador1b:', partido.jugador1b);
+            console.log('  jugador2a:', partido.jugador2a);
+            console.log('  jugador2b:', partido.jugador2b);
+            console.log('  pareja1_id:', partido.pareja1_id);
+            console.log('  pareja2_id:', partido.pareja2_id);
+            console.log('  sets:', partido.sets);
+            console.log('  ---');
           });
         }
+        
         setPartidos(data.partidos || []);
       }
     } catch (error) {
@@ -583,97 +613,188 @@ const PartidosSection = () => {
   };
 
   useEffect(() => { 
-    cargarTorneos(); 
+    cargarTorneos();
+    cargarParejas();
   }, []);
   useEffect(() => { cargarPartidos(torneoId); }, [torneoId]);
 
-  const registrarResultado = async (partido) => {
-    console.log('Iniciando registro de resultado para partido:', partido.id);
-    const resultado = prompt(`Registrar resultado para partido ${partido.id}\n\nIngresá el resultado separado por comas (ej: 6-0, 6-2):\n- Primer set: resultado de la pareja 1 (ej: 6-0)\n- Segundo set: resultado de la pareja 1 (ej: 6-2)\n\nFormato: "set1, set2"\n\nNOTA: Si el resultado se muestra incompleto, usa formato alternativo: "6_0, 6_2"`);
-    if (!resultado) {
-      console.log('Usuario canceló el registro de resultado');
-      return;
+  // Función para abrir el modal de edición
+  const abrirModalEdicion = (partido) => {
+    setPartidoSeleccionado(partido);
+    
+    // Si el partido ya tiene sets, cargarlos; si no, crear sets vacíos
+    if (partido.sets && partido.sets.length > 0) {
+      setSets(partido.sets.map(set => ({
+        numero_set: set.numero_set,
+        games_pareja1: set.games_pareja1 || '',
+        games_pareja2: set.games_pareja2 || ''
+      })));
+    } else {
+      // Crear 2 sets vacíos por defecto
+      setSets([
+        { numero_set: 1, games_pareja1: '', games_pareja2: '' },
+        { numero_set: 2, games_pareja1: '', games_pareja2: '' }
+      ]);
     }
     
+    setModalAbierto(true);
+  };
+
+  // Función para cerrar el modal
+  const cerrarModal = () => {
+    setModalAbierto(false);
+    setPartidoSeleccionado(null);
+    setSets([]);
+  };
+
+  // Función para agregar un set
+  const agregarSet = () => {
+    if (sets.length < 5) {
+      setSets([...sets, { 
+        numero_set: sets.length + 1, 
+        games_pareja1: '', 
+        games_pareja2: '' 
+      }]);
+    }
+  };
+
+  // Función para eliminar un set
+  const eliminarSet = (index) => {
+    if (sets.length > 2) {
+      const nuevosSets = sets.filter((_, i) => i !== index);
+      // Renumerar los sets
+      const setsRenumerados = nuevosSets.map((set, i) => ({
+        ...set,
+        numero_set: i + 1
+      }));
+      setSets(setsRenumerados);
+    }
+  };
+
+  // Función para actualizar un set
+  const actualizarSet = (index, campo, valor) => {
+    const nuevosSets = [...sets];
+    nuevosSets[index][campo] = valor;
+    setSets(nuevosSets);
+  };
+
+  // Función para guardar los resultados
+  const guardarResultados = async () => {
+    // Validar que todos los sets tengan valores
+    const setsValidos = sets.filter(set => 
+      set.games_pareja1 !== '' && set.games_pareja2 !== ''
+    );
+    
+    if (setsValidos.length === 0) {
+      setMessage('Debes ingresar al menos un set válido');
+      return;
+    }
+
+    // Validar que los valores estén entre 0 y 7
+    for (const set of setsValidos) {
+      const games1 = parseInt(set.games_pareja1);
+      const games2 = parseInt(set.games_pareja2);
+      
+      if (isNaN(games1) || isNaN(games2) || games1 < 0 || games1 > 7 || games2 < 0 || games2 > 7) {
+        setMessage('Los games deben ser números entre 0 y 7');
+        return;
+      }
+    }
+
     try {
+      setGuardando(true);
       setMessage('');
-      
-      // Debug: mostrar datos del partido y resultado
-      console.log('Partido seleccionado:', partido);
-      console.log('Resultado ingresado:', resultado);
-      
-      // Usar el formato correcto que funciona (resultado separado por sets)
-      const resultadoSplit = resultado.split(',');
-      let resultadoPareja1 = resultadoSplit[0]?.trim() || resultado;
-      let resultadoPareja2 = resultadoSplit[1]?.trim() || '0';
-      
-      // Detectar si el usuario está usando formato alternativo (con guiones bajos)
-      const usaFormatoAlternativo = resultado.includes('_');
-      
-      console.log('Resultado original:', resultado);
-      console.log('Resultado split:', resultadoSplit);
-      console.log('Usa formato alternativo:', usaFormatoAlternativo);
-      console.log('Resultado pareja 1 (antes):', resultadoPareja1);
-      console.log('Resultado pareja 2 (antes):', resultadoPareja2);
-      
-      // Si usa formato alternativo, convertir guiones bajos a guiones normales
-      if (usaFormatoAlternativo) {
-        resultadoPareja1 = resultadoPareja1.replace(/_/g, '-');
-        resultadoPareja2 = resultadoPareja2.replace(/_/g, '-');
-        console.log('Convertido a formato normal:');
-        console.log('Resultado pareja 1 (después):', resultadoPareja1);
-        console.log('Resultado pareja 2 (después):', resultadoPareja2);
-      }
-      
-      const datosCorrectos = {
-        partido_id: partido.id,
-        torneo_id: torneoId,
-        pareja1_id: partido.pareja1_id,
-        pareja2_id: partido.pareja2_id,
-        resultado_pareja1: resultadoPareja1,
-        resultado_pareja2: resultadoPareja2,
-        ronda: partido.ronda
+
+      const datos = {
+        partido_id: partidoSeleccionado.id,
+        sets: setsValidos.map(set => ({
+          numero_set: set.numero_set,
+          games_pareja1: parseInt(set.games_pareja1),
+          games_pareja2: parseInt(set.games_pareja2)
+        }))
       };
-      
-      console.log('Datos que se enviarán (formato correcto):', datosCorrectos);
-      
-      // Si el backend está truncando resultados, probar formato alternativo
-      if (resultadoPareja1.includes('-') && !usaFormatoAlternativo) {
-        console.log('⚠️ ADVERTENCIA: El backend podría truncar resultados con guiones');
-        console.log('💡 Sugerencia: Usa formato alternativo como "6_0, 6_2" en el futuro');
-      }
-      
-      const res = await fetch(API_BASE + 'registrar_resultado.php', {
-        method: 'POST', 
+
+      console.log('Enviando datos:', datos);
+
+      const res = await fetch(API_BASE + 'actualizar_resultado.php', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datosCorrectos)
+        body: JSON.stringify(datos)
       });
-      
-      console.log('Respuesta del servidor:', res.status, res.statusText);
-      
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-      }
-      
+
       const data = await res.json();
-      console.log('Datos de respuesta:', data);
-      
+      console.log('Respuesta del servidor:', data);
+
       if (data.status === 'ok') {
-        setMessage('✅ Resultado registrado correctamente');
+        setMessage('✅ Resultado actualizado correctamente');
+        cerrarModal();
         await cargarPartidos(torneoId);
         setTimeout(() => setMessage(''), 3000);
       } else {
-        console.log('Error completo del servidor:', data);
-        setMessage('Error: ' + (data.message || 'No se pudo registrar'));
+        setMessage('Error: ' + (data.message || 'No se pudo actualizar el resultado'));
       }
     } catch (error) {
-      console.error('Error al registrar resultado:', error);
-      if (error.message.includes('HTTP')) {
-        setMessage('Error del servidor: ' + error.message);
-      } else {
-        setMessage('Error de conexión: ' + error.message);
+      console.error('Error al guardar resultados:', error);
+      setMessage('Error de conexión: ' + error.message);
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  // Función para formatear el nombre de la pareja
+  const formatearPareja = (partido, tipoPareja) => {
+    const parejaId = tipoPareja === 'A' ? partido.pareja1_id : partido.pareja2_id;
+    
+    // Buscar la pareja en la lista de parejas cargadas
+    const pareja = parejas.find(p => p.id === parejaId || p.pareja_id === parejaId);
+    
+    console.log(`Formateando pareja ${tipoPareja} para partido ${partido.id}:`);
+    console.log('  parejaId:', parejaId);
+    console.log('  pareja encontrada:', pareja);
+    
+    if (pareja) {
+      // Intentar diferentes campos para obtener los nombres de los jugadores
+      const jugador1 = pareja.jugador1_nombre || pareja.jugador1 || pareja.jugador_1 || pareja.nombre_jugador1 || pareja.jugador_a;
+      const jugador2 = pareja.jugador2_nombre || pareja.jugador2 || pareja.jugador_2 || pareja.nombre_jugador2 || pareja.jugador_b;
+      
+      console.log('  jugador1:', jugador1);
+      console.log('  jugador2:', jugador2);
+      console.log('  campos de pareja:', Object.keys(pareja));
+      
+      if (jugador1 && jugador2 && jugador1 !== 'undefined' && jugador2 !== 'undefined' && jugador1 !== null && jugador2 !== null) {
+        return `${jugador1} + ${jugador2}`;
       }
     }
+    
+    // Si no se encuentra la pareja o los nombres, mostrar información de debug
+    return `Pareja ${tipoPareja} (ID: ${parejaId})`;
+  };
+
+  // Función para renderizar los sets de un partido
+  const renderizarSets = (partido) => {
+    if (partido.sets && partido.sets.length > 0) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {partido.sets.map((set, index) => (
+            <div key={index} style={{
+              padding: '4px 8px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              color: '#495057'
+            }}>
+              Set {set.numero_set}: {set.games_pareja1} - {set.games_pareja2}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return (
+      <span style={{ color: '#6c757d', fontStyle: 'italic' }}>
+        Sin resultados registrados
+      </span>
+    );
   };
 
   return (
@@ -703,26 +824,15 @@ const PartidosSection = () => {
                   <th>Ronda</th>
                   <th>Pareja A</th>
                   <th>Pareja B</th>
-                  <th>Resultado</th>
+                  <th>Resultados</th>
                   <th>Ganador</th>
-                  <th></th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {partidos.map((p, idx) => {
-                  console.log(`Renderizando partido ${p.id || idx}:`, p);
-                  
-                  // Función para formatear el nombre de la pareja usando la estructura real del backend
-                  const formatearPareja = (jugador1, jugador2) => {
-                    if (jugador1 && jugador2 && jugador1 !== 'undefined' && jugador2 !== 'undefined') {
-                      return `${jugador1} + ${jugador2}`;
-                    }
-                    return 'Pareja no disponible';
-                  };
-                  
-                  // Usar los campos correctos del backend
-                  const parejaA = formatearPareja(p.jugador1a, p.jugador1b);
-                  const parejaB = formatearPareja(p.jugador2a, p.jugador2b);
+                  const parejaA = formatearPareja(p, 'A');
+                  const parejaB = formatearPareja(p, 'B');
                   
                   return (
                     <tr key={p.id || idx}>
@@ -742,26 +852,7 @@ const PartidosSection = () => {
                       <td>{parejaA}</td>
                       <td>{parejaB}</td>
                       <td>
-                        {p.resultado_pareja1 && p.resultado_pareja2 ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <span style={{ 
-                              fontSize: '14px', 
-                              fontWeight: 'bold',
-                              color: '#007bff'
-                            }}>
-                              Set 1: {p.resultado_pareja1}
-                            </span>
-                            <span style={{ 
-                              fontSize: '14px', 
-                              fontWeight: 'bold',
-                              color: '#28a745'
-                            }}>
-                              Set 2: {p.resultado_pareja2}
-                            </span>
-                          </div>
-                        ) : (
-                          <span style={{ color: '#6c757d' }}>-</span>
-                        )}
+                        {renderizarSets(p)}
                       </td>
                       <td>
                         {p.ganador_id ? (
@@ -780,7 +871,13 @@ const PartidosSection = () => {
                         )}
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <button className="btn btn-primary" onClick={() => registrarResultado(p)}>Cargar resultado</button>
+                        <button 
+                          className="btn btn-primary" 
+                          onClick={() => abrirModalEdicion(p)}
+                          style={{ fontSize: '12px', padding: '4px 8px' }}
+                        >
+                          Editar resultado
+                        </button>
                       </td>
                     </tr>
                   );
@@ -793,6 +890,156 @@ const PartidosSection = () => {
         )}
         {message && <div className={`alert ${message.startsWith('Error') ? 'alert-danger' : 'alert-success'}`} style={{ marginTop: 12 }}>{message}</div>}
       </div>
+
+      {/* Modal de edición de resultados */}
+      {modalAbierto && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            padding: '24px',
+            maxWidth: '600px',
+            width: '90%',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+          }}>
+            <h4 style={{ marginTop: 0, marginBottom: '20px', color: '#333' }}>
+              Editar Resultados - Partido {partidoSeleccionado?.id}
+            </h4>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <strong>Pareja A:</strong> {formatearPareja(partidoSeleccionado, 'A')}<br/>
+              <strong>Pareja B:</strong> {formatearPareja(partidoSeleccionado, 'B')}
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <h5 style={{ marginBottom: '10px' }}>Sets del Partido:</h5>
+              {sets.map((set, index) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  marginBottom: '10px',
+                  padding: '10px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '4px'
+                }}>
+                  <span style={{ fontWeight: 'bold', minWidth: '60px' }}>
+                    Set {set.numero_set}:
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="7"
+                    value={set.games_pareja1}
+                    onChange={(e) => actualizarSet(index, 'games_pareja1', e.target.value)}
+                    placeholder="Games Pareja A"
+                    style={{
+                      width: '80px',
+                      padding: '4px 8px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px'
+                    }}
+                  />
+                  <span>-</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="7"
+                    value={set.games_pareja2}
+                    onChange={(e) => actualizarSet(index, 'games_pareja2', e.target.value)}
+                    placeholder="Games Pareja B"
+                    style={{
+                      width: '80px',
+                      padding: '4px 8px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px'
+                    }}
+                  />
+                  {sets.length > 2 && (
+                    <button
+                      onClick={() => eliminarSet(index)}
+                      style={{
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        padding: '4px 8px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      Eliminar
+                    </button>
+                  )}
+                </div>
+              ))}
+              
+              {sets.length < 5 && (
+                <button
+                  onClick={agregarSet}
+                  style={{
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    marginTop: '10px'
+                  }}
+                >
+                  + Agregar Set
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={cerrarModal}
+                style={{
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={guardarResultados}
+                disabled={guardando}
+                style={{
+                  backgroundColor: guardando ? '#ccc' : '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '8px 16px',
+                  cursor: guardando ? 'not-allowed' : 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                {guardando ? 'Guardando...' : 'Guardar Resultado'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
