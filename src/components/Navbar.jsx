@@ -11,9 +11,23 @@ const Navbar = () => {
 
   const handleLogout = () => {
     if (window.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+      console.log('Navbar - Iniciando logout');
       localStorage.removeItem('usuario');
+      console.log('Navbar - localStorage limpiado');
+      
+      // Disparar evento personalizado para notificar el logout
+      window.dispatchEvent(new CustomEvent('userLogout'));
+      console.log('Navbar - Evento userLogout disparado');
+      
+      // También disparar el evento storage para compatibilidad
       window.dispatchEvent(new Event('storage'));
-      navigate('/login', { replace: true });
+      console.log('Navbar - Evento storage disparado');
+      
+      // Esperar un momento para que el estado se actualice antes de navegar
+      setTimeout(() => {
+        console.log('Navbar - Navegando a /');
+        navigate('/', { replace: true });
+      }, 100);
     }
   };
 

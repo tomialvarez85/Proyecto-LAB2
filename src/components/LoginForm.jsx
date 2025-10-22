@@ -44,12 +44,15 @@ const LoginForm = ({ onLoginSuccess }) => {
         setUserData(data);
         localStorage.setItem('usuario', JSON.stringify(data));
         
-        // Redirigir al menú principal después de 2 segundos
+        // Disparar evento personalizado para notificar el cambio de estado
+        window.dispatchEvent(new CustomEvent('userLogin', { detail: data }));
+        
+        // Redirigir al menú principal después de 1 segundo
         setTimeout(() => {
           if (onLoginSuccess) {
             onLoginSuccess();
           }
-        }, 2000);
+        }, 1000);
       } else {
         setMessage('Error en el login: ' + (data.message || 'Credenciales inválidas'));
       }

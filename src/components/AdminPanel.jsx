@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import TorneosAdmin from './admin/torneos/TorneosAdmin';
+import TorneosAdminResponsive from './admin/torneos/TorneosAdminResponsive';
 
 const AdminPanel = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -58,7 +58,7 @@ const AdminPanel = () => {
   const obtenerUsuarios = async () => {
     try {
       setLoading(prev => ({ ...prev, usuarios: true }));
-      const response = await fetch('https://padel-gestionado.com/api/usuarios.php', {
+      const response = await fetch('/api/usuarios.php', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ const AdminPanel = () => {
   const obtenerTorneos = async () => {
     try {
       setLoading(prev => ({ ...prev, torneos: true }));
-      const response = await fetch('https://padel-gestionado.com/api/torneos.php', {
+      const response = await fetch('/api/torneos.php', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ const AdminPanel = () => {
   const obtenerReservas = async () => {
     try {
       setLoading(prev => ({ ...prev, reservas: true }));
-      const response = await fetch('https://padel-gestionado.com/api/todas_las_reservas.php', {
+      const response = await fetch('/api/todas_las_reservas.php', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ const AdminPanel = () => {
       setCreandoTorneo(true);
       setMessage('');
 
-      const response = await fetch('https://padel-gestionado.com/api/crear_torneo.php', {
+      const response = await fetch('/api/crear_torneo.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ const AdminPanel = () => {
       setEliminandoTorneo(torneoId);
       setMessage('');
 
-      const response = await fetch('https://padel-gestionado.com/api/eliminar_torneo.php', {
+      const response = await fetch('/api/eliminar_torneo.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -234,7 +234,7 @@ const AdminPanel = () => {
       setEliminandoUsuario(usuarioId);
       setMessage('');
 
-      const response = await fetch('https://padel-gestionado.com/api/eliminar_usuario.php', {
+      const response = await fetch('/api/eliminar_usuario.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -276,7 +276,7 @@ const AdminPanel = () => {
       setEliminandoReserva(reservaId);
       setMessage('');
 
-      const response = await fetch('https://padel-gestionado.com/api/eliminar_reserva.php', {
+      const response = await fetch('/api/eliminar_reserva.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -630,7 +630,7 @@ const AdminPanel = () => {
       {/* Nueva Sección: Torneos */}
       <div style={{ marginBottom: '40px' }}>
         <h3 style={{ color: '#0ea5e9', marginBottom: '15px' }}>🏟️ Torneos</h3>
-        <TorneosAdmin />
+        <TorneosAdminResponsive />
       </div>
 
       {/* Mensajes de estado */}
