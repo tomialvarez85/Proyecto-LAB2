@@ -87,3 +87,11 @@ export const cancelarReserva = async (usuarioId, reservaId) => {
     })
   });
 };
+
+// Función para obtener disponibilidad de canchas
+export const obtenerDisponibilidad = async (fecha) => {
+  return apiRequest('disponibilidad.php', {
+    method: 'POST',
+    body: JSON.stringify({ fecha })
+  });
+};

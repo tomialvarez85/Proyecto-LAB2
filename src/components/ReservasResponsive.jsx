@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { crearReserva } from '../utils/api';
+import CalendarioVisual from './CalendarioVisual';
 
 const ReservasResponsive = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,7 @@ const ReservasResponsive = () => {
   const [message, setMessage] = useState('');
   const [usuario, setUsuario] = useState(null);
   const [screenSize, setScreenSize] = useState('desktop');
+  const [mostrarCalendarioVisual, setMostrarCalendarioVisual] = useState(false);
   
   // Fecha local de hoy en formato YYYY-MM-DD (sin UTC)
   const todayLocalStr = (() => {
@@ -75,6 +77,12 @@ const ReservasResponsive = () => {
       [name]: value
     }));
   };
+
+  const handleReservaCreada = (data) => {
+    setMessage('¡Reserva creada exitosamente desde el calendario!');
+    setTimeout(() => setMessage(''), 3000);
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -253,6 +261,49 @@ const ReservasResponsive = () => {
             Reserva tu cancha de padel favorita
           </p>
         </div>
+
+        {/* Botón para mostrar calendario visual */}
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '20px'
+        }}>
+          <button
+            type="button"
+            onClick={() => setMostrarCalendarioVisual(!mostrarCalendarioVisual)}
+            style={{
+              background: mostrarCalendarioVisual 
+                ? 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)' 
+                : 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+              color: 'white',
+              padding: '12px 24px',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: config.fontSize,
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 6px 20px rgba(0,0,0,0.3)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+            }}
+          >
+            {mostrarCalendarioVisual ? '📅 Ocultar Calendario' : '📅 Ver Calendario de Disponibilidad'}
+          </button>
+        </div>
+
+        {/* Calendario visual */}
+        {mostrarCalendarioVisual && (
+          <CalendarioVisual
+            usuario={usuario}
+            onReservaCreada={handleReservaCreada}
+          />
+        )}
 
         {/* Formulario */}
         <div style={{
