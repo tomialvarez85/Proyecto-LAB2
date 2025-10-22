@@ -1,5 +1,7 @@
+import { BASE_URL } from '../api/config.js';
+
 // Configuración de API
-const API_BASE_URL = 'https://padel-gestionado.com/api';
+const API_BASE_URL = BASE_URL;
 
 // Función para hacer peticiones con manejo de CORS
 export const apiRequest = async (endpoint, options = {}) => {

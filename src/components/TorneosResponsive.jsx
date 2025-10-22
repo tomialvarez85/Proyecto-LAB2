@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiPost, buildApiUrl } from '../api/config.js';
 
 const TorneosResponsive = () => {
   const [torneos, setTorneos] = useState([]);
@@ -6,6 +7,8 @@ const TorneosResponsive = () => {
   const [message, setMessage] = useState('');
   const [usuario, setUsuario] = useState(null);
   const [screenSize, setScreenSize] = useState('desktop');
+  const [inscribiendo, setInscribiendo] = useState(false);
+  const [inscripciones, setInscripciones] = useState([]);
 
   useEffect(() => {
     const updateScreenSize = () => {
@@ -31,6 +34,7 @@ const TorneosResponsive = () => {
         const usuarioData = JSON.parse(usuarioGuardado);
         setUsuario(usuarioData);
         cargarTorneos();
+        cargarInscripciones();
       } catch (error) {
         console.error('Error al parsear datos del usuario:', error);
         setMessage('Error al cargar datos del usuario');
@@ -44,14 +48,8 @@ const TorneosResponsive = () => {
     try {
       setLoading(true);
       console.log('Cargando torneos...');
-      const response = await fetch('/api/torneos.php', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      const data = await response.json();
+      
+      const data = await apiPost('torneos.php', {});
       console.log('Respuesta de torneos:', data);
 
       if (data.status === 'ok') {
@@ -76,6 +74,140 @@ const TorneosResponsive = () => {
       return fechaObj.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
     } catch (error) {
       return fecha;
+    }
+  };
+
+  const inscribirseTorneo = async (torneoId) => {
+    if (!usuario) {
+      setMessage('Debes iniciar sesión para inscribirte');
+      return;
+    }
+
+    // Verificar si el usuario es admin
+    const adminStatus = usuario.admin || usuario.user?.admin || usuario.is_admin;
+    const esAdmin = adminStatus === 1 || adminStatus === "1" || adminStatus === true;
+    
+    if (esAdmin) {
+      setMessage('Los administradores no pueden inscribirse a torneos');
+      return;
+    }
+
+    // Confirmar inscripción
+    const confirmar = window.confirm('¿Estás seguro de que quieres inscribirte a este torneo?');
+    if (!confirmar) {
+      return;
+    }
+
+    try {
+      setInscribiendo(true);
+      setMessage('');
+
+      const usuarioId = usuario.user?.id || usuario.id || usuario.user_id || usuario.usuario_id || usuario.ID || usuario.userId;
+      
+      if (!usuarioId) {
+        setMessage('Error: No se pudo obtener el ID del usuario');
+        return;
+      }
+
+      const requestData = {
+        usuario_id: usuarioId,
+        torneo_id: torneoId
+      };
+
+      const data = await apiPost('inscribir.php', requestData);
+      console.log('Respuesta de inscripción:', data);
+
+      if (data.status === 'ok') {
+        setMessage('¡Te has inscrito exitosamente al torneo!');
+        // Recargar inscripciones
+        await cargarInscripciones();
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        setMessage('Error: ' + (data.message || 'No se pudo inscribir al torneo'));
+      }
+    } catch (error) {
+      console.error('Error al inscribirse:', error);
+      console.error('Error details:', error.message);
+      setMessage('Error de conexión al inscribirse al torneo: ' + error.message);
+    } finally {
+      setInscribiendo(false);
+    }
+  };
+
+  const cargarInscripciones = async () => {
+    try {
+      const usuarioId = usuario?.user?.id || usuario?.id || usuario?.user_id || usuario?.usuario_id || usuario?.ID || usuario?.userId;
+      
+      if (!usuarioId) return;
+
+      const data = await apiPost('mis_inscripciones.php', {
+        usuario_id: usuarioId
+      });
+      if (data.status === 'ok') {
+        setInscripciones(data.inscripciones || []);
+      }
+    } catch (error) {
+      console.error('Error al cargar inscripciones:', error);
+    }
+  };
+
+  const estaInscrito = (torneoId) => {
+    return inscripciones.some(inscripcion => inscripcion.torneo_id == torneoId);
+  };
+
+  const cancelarInscripcion = async (torneoId) => {
+    if (!usuario) {
+      setMessage('Debes iniciar sesión para cancelar inscripciones');
+      return;
+    }
+
+    // Verificar si el usuario es admin
+    const adminStatus = usuario.admin || usuario.user?.admin || usuario.is_admin;
+    const esAdmin = adminStatus === 1 || adminStatus === "1" || adminStatus === true;
+    
+    if (esAdmin) {
+      setMessage('Los administradores no pueden cancelar inscripciones a torneos');
+      return;
+    }
+
+    // Confirmar cancelación
+    const confirmar = window.confirm('¿Estás seguro de que quieres cancelar tu inscripción a este torneo?');
+    if (!confirmar) {
+      return;
+    }
+
+    try {
+      setInscribiendo(true);
+      setMessage('');
+
+      const usuarioId = usuario.user?.id || usuario.id || usuario.user_id || usuario.usuario_id || usuario.ID || usuario.userId;
+      
+      if (!usuarioId) {
+        setMessage('Error: No se pudo obtener el ID del usuario');
+        return;
+      }
+
+      const requestData = {
+        usuario_id: usuarioId,
+        torneo_id: torneoId
+      };
+
+      const data = await apiPost('cancelar_inscripcion.php', requestData);
+      console.log('Respuesta de cancelación:', data);
+
+      if (data.status === 'ok') {
+        setMessage('¡Inscripción cancelada exitosamente!');
+        // Recargar inscripciones
+        await cargarInscripciones();
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        setMessage('Error: ' + (data.message || 'No se pudo cancelar la inscripción'));
+      }
+    } catch (error) {
+      console.error('Error al cancelar inscripción:', error);
+      setMessage('Error de conexión al cancelar la inscripción: ' + error.message);
+    } finally {
+      setInscribiendo(false);
     }
   };
 
@@ -315,29 +447,90 @@ const TorneosResponsive = () => {
                   </div>
                 </div>
 
-                <button style={{
-                  width: '100%',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  padding: '12px 20px',
-                  fontSize: config.cardTextSize,
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.transform = 'translateY(-2px)';
-                  e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.3)';
-                }}>
-                  Ver Detalles
-                </button>
+                {/* Botones de inscripción/cancelación */}
+                {estaInscrito(torneo.id) ? (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      onClick={() => cancelarInscripcion(torneo.id)}
+                      disabled={inscribiendo}
+                      style={{
+                        flex: 1,
+                        background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '10px',
+                        padding: '12px 20px',
+                        fontSize: config.cardTextSize,
+                        fontWeight: '600',
+                        cursor: inscribiendo ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 4px 15px rgba(220, 53, 69, 0.3)',
+                        opacity: inscribiendo ? 0.7 : 1
+                      }}
+                      onMouseOver={(e) => {
+                        if (!inscribiendo) {
+                          e.target.style.transform = 'translateY(-2px)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(220, 53, 69, 0.4)';
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (!inscribiendo) {
+                          e.target.style.transform = 'translateY(0)';
+                          e.target.style.boxShadow = '0 4px 15px rgba(220, 53, 69, 0.3)';
+                        }
+                      }}>
+                      {inscribiendo ? 'Cancelando...' : 'Cancelar inscripción'}
+                    </button>
+                    <div style={{
+                      flex: 1,
+                      background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '12px 20px',
+                      fontSize: config.cardTextSize,
+                      fontWeight: '600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 15px rgba(40, 167, 69, 0.3)'
+                    }}>
+                      ✓ Inscrito
+                    </div>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => inscribirseTorneo(torneo.id)}
+                    disabled={inscribiendo}
+                    style={{
+                      width: '100%',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '12px 20px',
+                      fontSize: config.cardTextSize,
+                      fontWeight: '600',
+                      cursor: inscribiendo ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
+                      opacity: inscribiendo ? 0.7 : 1
+                    }}
+                    onMouseOver={(e) => {
+                      if (!inscribiendo) {
+                        e.target.style.transform = 'translateY(-2px)';
+                        e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (!inscribiendo) {
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.3)';
+                      }
+                    }}>
+                    {inscribiendo ? 'Inscribiendo...' : 'Inscribirse'}
+                  </button>
+                )}
               </div>
             ))}
           </div>

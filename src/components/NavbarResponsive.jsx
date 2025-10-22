@@ -63,41 +63,48 @@ const NavbarResponsive = () => {
 
   const navLinks = usuario ? (
     <>
-      <NavLink 
-        to="/" 
-        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-        onClick={closeMobileMenu}
-      >
-        Inicio
-      </NavLink>
-      <NavLink 
-        to="/reservas" 
-        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-        onClick={closeMobileMenu}
-      >
-        Reservas
-      </NavLink>
-      <NavLink 
-        to="/mis-reservas" 
-        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-        onClick={closeMobileMenu}
-      >
-        Mis Reservas
-      </NavLink>
-      <NavLink 
-        to="/torneos" 
-        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-        onClick={closeMobileMenu}
-      >
-        Torneos
-      </NavLink>
-      <NavLink 
-        to="/mis-torneos" 
-        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-        onClick={closeMobileMenu}
-      >
-        Mis Torneos
-      </NavLink>
+      {/* Vista para usuarios regulares */}
+      {!esAdmin && (
+        <>
+          <NavLink 
+            to="/" 
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            onClick={closeMobileMenu}
+          >
+            Inicio
+          </NavLink>
+          <NavLink 
+            to="/reservas" 
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            onClick={closeMobileMenu}
+          >
+            Reservas
+          </NavLink>
+          <NavLink 
+            to="/mis-reservas" 
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            onClick={closeMobileMenu}
+          >
+            Mis Reservas
+          </NavLink>
+          <NavLink 
+            to="/torneos" 
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            onClick={closeMobileMenu}
+          >
+            Torneos
+          </NavLink>
+          <NavLink 
+            to="/mis-torneos" 
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            onClick={closeMobileMenu}
+          >
+            Mis Torneos
+          </NavLink>
+        </>
+      )}
+      
+      {/* Vista para administradores - Solo Admin */}
       {esAdmin && (
         <NavLink 
           to="/admin" 
@@ -107,6 +114,8 @@ const NavbarResponsive = () => {
           Admin
         </NavLink>
       )}
+      
+      {/* Botón de cerrar sesión para todos los usuarios logueados */}
       <button 
         className="btn btn-danger" 
         onClick={handleLogout}

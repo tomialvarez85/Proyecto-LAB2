@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiPost } from '../api/config.js';
 
 const LoginFormResponsive = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
@@ -44,18 +45,10 @@ const LoginFormResponsive = ({ onLoginSuccess }) => {
     setUserData(null);
 
     try {
-      const response = await fetch('/api/login.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
+      const data = await apiPost('login.php', {
+        email: formData.email,
+        password: formData.password
       });
-
-      const data = await response.json();
 
       if (data.status === 'ok') {
         setMessage('Login exitoso! Redirigiendo al menú principal...');

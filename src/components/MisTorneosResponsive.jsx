@@ -6,6 +6,7 @@ const MisTorneosResponsive = () => {
   const [message, setMessage] = useState('');
   const [usuario, setUsuario] = useState(null);
   const [screenSize, setScreenSize] = useState('desktop');
+  const [abandonando, setAbandonando] = useState(false);
 
   useEffect(() => {
     const updateScreenSize = () => {
@@ -82,6 +83,59 @@ const MisTorneosResponsive = () => {
       return fechaObj.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
     } catch (error) {
       return fecha;
+    }
+  };
+
+  const abandonarTorneo = async (torneoId) => {
+    if (!usuario) {
+      setMessage('Debes iniciar sesión para abandonar torneos');
+      return;
+    }
+
+    // Confirmar abandono
+    const confirmar = window.confirm('¿Estás seguro de que quieres abandonar este torneo? Esta acción no se puede deshacer.');
+    if (!confirmar) {
+      return;
+    }
+
+    try {
+      setAbandonando(true);
+      setMessage('');
+
+      const usuarioId = usuario.user?.id || usuario.id || usuario.user_id || usuario.usuario_id || usuario.ID || usuario.userId;
+      
+      if (!usuarioId) {
+        setMessage('Error: No se pudo obtener el ID del usuario');
+        return;
+      }
+
+      const response = await fetch('/api/cancelar_inscripcion.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          usuario_id: usuarioId,
+          torneo_id: torneoId
+        })
+      });
+
+      const data = await response.json();
+      console.log('Respuesta de abandono:', data);
+
+      if (data.status === 'ok') {
+        setMessage('¡Has abandonado el torneo exitosamente!');
+        // Recargar torneos
+        await cargarMisTorneos(usuarioId);
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        setMessage('Error: ' + (data.message || 'No se pudo abandonar el torneo'));
+      }
+    } catch (error) {
+      console.error('Error al abandonar torneo:', error);
+      setMessage('Error de conexión al abandonar el torneo: ' + error.message);
+    } finally {
+      setAbandonando(false);
     }
   };
 
@@ -365,27 +419,35 @@ const MisTorneosResponsive = () => {
                   }}>
                     Ver Detalles
                   </button>
-                  <button style={{
-                    flex: 1,
-                    background: 'transparent',
-                    color: '#dc3545',
-                    border: '2px solid #dc3545',
-                    borderRadius: '10px',
-                    padding: '12px 20px',
-                    fontSize: config.cardTextSize,
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = '#dc3545';
-                    e.target.style.color = 'white';
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = 'transparent';
-                    e.target.style.color = '#dc3545';
-                  }}>
-                    Abandonar
+                  <button 
+                    onClick={() => abandonarTorneo(torneo.id)}
+                    disabled={abandonando}
+                    style={{
+                      flex: 1,
+                      background: 'transparent',
+                      color: '#dc3545',
+                      border: '2px solid #dc3545',
+                      borderRadius: '10px',
+                      padding: '12px 20px',
+                      fontSize: config.cardTextSize,
+                      fontWeight: '600',
+                      cursor: abandonando ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.3s ease',
+                      opacity: abandonando ? 0.7 : 1
+                    }}
+                    onMouseOver={(e) => {
+                      if (!abandonando) {
+                        e.target.style.backgroundColor = '#dc3545';
+                        e.target.style.color = 'white';
+                      }
+                    }}
+                    onMouseOut={(e) => {
+                      if (!abandonando) {
+                        e.target.style.backgroundColor = 'transparent';
+                        e.target.style.color = '#dc3545';
+                      }
+                    }}>
+                    {abandonando ? 'Abandonando...' : 'Abandonar'}
                   </button>
                 </div>
               </div>

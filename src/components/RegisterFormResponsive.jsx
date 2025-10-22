@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiPost } from '../api/config.js';
 
 const RegisterFormResponsive = ({ onRegisterSuccess }) => {
   const navigate = useNavigate();
@@ -51,19 +52,11 @@ const RegisterFormResponsive = ({ onRegisterSuccess }) => {
     }
 
     try {
-      const response = await fetch('/api/register.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nombre: formData.nombre,
-          email: formData.email,
-          password: formData.password
-        })
+      const data = await apiPost('register.php', {
+        nombre: formData.nombre,
+        email: formData.email,
+        password: formData.password
       });
-
-      const data = await response.json();
 
       if (data.status === 'ok') {
         setMessage('Registro exitoso! Redirigiendo al login...');

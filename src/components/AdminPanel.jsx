@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiPost, apiGet } from '../api/config.js';
 import TorneosAdminResponsive from './admin/torneos/TorneosAdminResponsive';
 
 const AdminPanel = () => {
@@ -58,14 +59,7 @@ const AdminPanel = () => {
   const obtenerUsuarios = async () => {
     try {
       setLoading(prev => ({ ...prev, usuarios: true }));
-      const response = await fetch('/api/usuarios.php', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      const data = await response.json();
+      const data = await apiGet('usuarios.php');
       console.log('Usuarios:', data);
 
       if (data.status === 'ok') {
@@ -84,14 +78,7 @@ const AdminPanel = () => {
   const obtenerTorneos = async () => {
     try {
       setLoading(prev => ({ ...prev, torneos: true }));
-      const response = await fetch('/api/torneos.php', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      const data = await response.json();
+      const data = await apiGet('torneos.php');
       console.log('Torneos:', data);
 
       if (data.status === 'ok') {
@@ -110,14 +97,7 @@ const AdminPanel = () => {
   const obtenerReservas = async () => {
     try {
       setLoading(prev => ({ ...prev, reservas: true }));
-      const response = await fetch('/api/todas_las_reservas.php', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      const data = await response.json();
+      const data = await apiGet('todas_las_reservas.php');
       console.log('Reservas:', data);
       
       // Debug: verificar si hay email en las reservas
@@ -151,15 +131,7 @@ const AdminPanel = () => {
       setCreandoTorneo(true);
       setMessage('');
 
-      const response = await fetch('/api/crear_torneo.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(nuevoTorneo)
-      });
-
-      const data = await response.json();
+      const data = await apiPost('crear_torneo.php', nuevoTorneo);
       console.log('Respuesta crear torneo:', data);
 
       if (data.status === 'ok') {
@@ -192,17 +164,9 @@ const AdminPanel = () => {
       setEliminandoTorneo(torneoId);
       setMessage('');
 
-      const response = await fetch('/api/eliminar_torneo.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          torneo_id: torneoId
-        })
+      const data = await apiPost('eliminar_torneo.php', {
+        torneo_id: torneoId
       });
-
-      const data = await response.json();
       console.log('Respuesta eliminar torneo:', data);
 
       if (data.status === 'ok') {
@@ -234,17 +198,9 @@ const AdminPanel = () => {
       setEliminandoUsuario(usuarioId);
       setMessage('');
 
-      const response = await fetch('/api/eliminar_usuario.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          usuario_id: usuarioId
-        })
+      const data = await apiPost('eliminar_usuario.php', {
+        usuario_id: usuarioId
       });
-
-      const data = await response.json();
       console.log('Respuesta eliminar usuario:', data);
 
       if (data.status === 'ok') {
@@ -276,17 +232,9 @@ const AdminPanel = () => {
       setEliminandoReserva(reservaId);
       setMessage('');
 
-      const response = await fetch('/api/eliminar_reserva.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reserva_id: reservaId
-        })
+      const data = await apiPost('eliminar_reserva.php', {
+        reserva_id: reservaId
       });
-
-      const data = await response.json();
       console.log('Respuesta eliminar reserva:', data);
 
       if (data.status === 'ok') {

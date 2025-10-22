@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 
 const MainPage = () => {
   const [screenSize, setScreenSize] = useState('desktop');
+  const [usuario, setUsuario] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const updateScreenSize = () => {
@@ -19,6 +21,34 @@ const MainPage = () => {
     window.addEventListener('resize', updateScreenSize);
 
     return () => window.removeEventListener('resize', updateScreenSize);
+  }, []);
+
+  // Cargar datos del usuario y verificar si es admin
+  useEffect(() => {
+    const cargarUsuario = () => {
+      try {
+        const usuarioData = localStorage.getItem('usuario');
+        
+        if (usuarioData) {
+          const usuarioParsed = JSON.parse(usuarioData);
+          setUsuario(usuarioParsed);
+          
+          // Verificar si es admin (admin=1)
+          const adminStatus = usuarioParsed.admin || usuarioParsed.user?.admin || usuarioParsed.is_admin;
+          const esAdmin = adminStatus === 1 || adminStatus === "1" || adminStatus === true;
+          setIsAdmin(esAdmin);
+        } else {
+          setUsuario(null);
+          setIsAdmin(false);
+        }
+      } catch (error) {
+        console.error('Error al cargar usuario:', error);
+        setUsuario(null);
+        setIsAdmin(false);
+      }
+    };
+
+    cargarUsuario();
   }, []);
 
   const getGridConfig = () => {
@@ -105,210 +135,218 @@ const MainPage = () => {
           gap: config.gap,
           marginBottom: '30px'
         }}>
-          <Link to="/reservas" style={{ textDecoration: 'none' }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '15px',
-              padding: config.cardPadding,
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-              transition: 'all 0.3s ease',
-              border: '1px solid #e9ecef',
-              cursor: 'pointer',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-5px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-            }}>
-              <h3 style={{
-                fontSize: config.cardTitleSize,
-                fontWeight: 'bold',
-                color: '#333',
-                margin: '0 0 10px 0'
-              }}>
-                📅 Reservas
-              </h3>
-              <p style={{
-                fontSize: config.cardTextSize,
-                color: '#666',
-                margin: 0,
-                lineHeight: '1.5',
-                flex: 1
-              }}>
-                Gestiona tus reservas de canchas de padel
-              </p>
-            </div>
-          </Link>
+          {/* Vista para usuarios regulares */}
+          {!isAdmin && (
+            <>
+              <Link to="/reservas" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  backgroundColor: 'white',
+                  borderRadius: '15px',
+                  padding: config.cardPadding,
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  border: '1px solid #e9ecef',
+                  cursor: 'pointer',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-5px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+                }}>
+                  <h3 style={{
+                    fontSize: config.cardTitleSize,
+                    fontWeight: 'bold',
+                    color: '#333',
+                    margin: '0 0 10px 0'
+                  }}>
+                    📅 Reservas
+                  </h3>
+                  <p style={{
+                    fontSize: config.cardTextSize,
+                    color: '#666',
+                    margin: 0,
+                    lineHeight: '1.5',
+                    flex: 1
+                  }}>
+                    Gestiona tus reservas de canchas de padel
+                  </p>
+                </div>
+              </Link>
 
-          <Link to="/mis-reservas" style={{ textDecoration: 'none' }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '15px',
-              padding: config.cardPadding,
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-              transition: 'all 0.3s ease',
-              border: '1px solid #e9ecef',
-              cursor: 'pointer',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-5px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-            }}>
-              <h3 style={{
-                fontSize: config.cardTitleSize,
-                fontWeight: 'bold',
-                color: '#333',
-                margin: '0 0 10px 0'
-              }}>
-                📋 Mis Reservas
-              </h3>
-              <p style={{
-                fontSize: config.cardTextSize,
-                color: '#666',
-                margin: 0,
-                lineHeight: '1.5',
-                flex: 1
-              }}>
-                Ve y gestiona tus reservas existentes
-              </p>
-            </div>
-          </Link>
+              <Link to="/mis-reservas" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  backgroundColor: 'white',
+                  borderRadius: '15px',
+                  padding: config.cardPadding,
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  border: '1px solid #e9ecef',
+                  cursor: 'pointer',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-5px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+                }}>
+                  <h3 style={{
+                    fontSize: config.cardTitleSize,
+                    fontWeight: 'bold',
+                    color: '#333',
+                    margin: '0 0 10px 0'
+                  }}>
+                    📋 Mis Reservas
+                  </h3>
+                  <p style={{
+                    fontSize: config.cardTextSize,
+                    color: '#666',
+                    margin: 0,
+                    lineHeight: '1.5',
+                    flex: 1
+                  }}>
+                    Ve y gestiona tus reservas existentes
+                  </p>
+                </div>
+              </Link>
 
-          <Link to="/torneos" style={{ textDecoration: 'none' }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '15px',
-              padding: config.cardPadding,
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-              transition: 'all 0.3s ease',
-              border: '1px solid #e9ecef',
-              cursor: 'pointer',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-5px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-            }}>
-              <h3 style={{
-                fontSize: config.cardTitleSize,
-                fontWeight: 'bold',
-                color: '#333',
-                margin: '0 0 10px 0'
-              }}>
-                🏆 Torneos
-              </h3>
-              <p style={{
-                fontSize: config.cardTextSize,
-                color: '#666',
-                margin: 0,
-                lineHeight: '1.5',
-                flex: 1
-              }}>
-                Participa en torneos y competiciones
-              </p>
-            </div>
-          </Link>
+              <Link to="/torneos" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  backgroundColor: 'white',
+                  borderRadius: '15px',
+                  padding: config.cardPadding,
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  border: '1px solid #e9ecef',
+                  cursor: 'pointer',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-5px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+                }}>
+                  <h3 style={{
+                    fontSize: config.cardTitleSize,
+                    fontWeight: 'bold',
+                    color: '#333',
+                    margin: '0 0 10px 0'
+                  }}>
+                    🏆 Torneos
+                  </h3>
+                  <p style={{
+                    fontSize: config.cardTextSize,
+                    color: '#666',
+                    margin: 0,
+                    lineHeight: '1.5',
+                    flex: 1
+                  }}>
+                    Participa en torneos y competiciones
+                  </p>
+                </div>
+              </Link>
 
-          <Link to="/mis-torneos" style={{ textDecoration: 'none' }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '15px',
-              padding: config.cardPadding,
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-              transition: 'all 0.3s ease',
-              border: '1px solid #e9ecef',
-              cursor: 'pointer',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-5px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-            }}>
-              <h3 style={{
-                fontSize: config.cardTitleSize,
-                fontWeight: 'bold',
-                color: '#333',
-                margin: '0 0 10px 0'
-              }}>
-                🏅 Mis Torneos
-              </h3>
-              <p style={{
-                fontSize: config.cardTextSize,
-                color: '#666',
-                margin: 0,
-                lineHeight: '1.5',
-                flex: 1
-              }}>
-                Ve los torneos en los que estás inscrito
-              </p>
-            </div>
-          </Link>
+              <Link to="/mis-torneos" style={{ textDecoration: 'none' }}>
+                <div style={{
+                  backgroundColor: 'white',
+                  borderRadius: '15px',
+                  padding: config.cardPadding,
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease',
+                  border: '1px solid #e9ecef',
+                  cursor: 'pointer',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-5px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+                }}>
+                  <h3 style={{
+                    fontSize: config.cardTitleSize,
+                    fontWeight: 'bold',
+                    color: '#333',
+                    margin: '0 0 10px 0'
+                  }}>
+                    🏅 Mis Torneos
+                  </h3>
+                  <p style={{
+                    fontSize: config.cardTextSize,
+                    color: '#666',
+                    margin: 0,
+                    lineHeight: '1.5',
+                    flex: 1
+                  }}>
+                    Ve los torneos en los que estás inscrito
+                  </p>
+                </div>
+              </Link>
+            </>
+          )}
 
-          <Link to="/admin" style={{ textDecoration: 'none' }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '15px',
-              padding: config.cardPadding,
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-              transition: 'all 0.3s ease',
-              border: '1px solid #e9ecef',
-              cursor: 'pointer',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-5px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-            }}>
-              <h3 style={{
-                fontSize: config.cardTitleSize,
-                fontWeight: 'bold',
-                color: '#333',
-                margin: '0 0 10px 0'
+          {/* Vista para administradores - Solo Panel Admin */}
+          {isAdmin && (
+            <Link to="/admin" style={{ textDecoration: 'none' }}>
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '15px',
+                padding: config.cardPadding,
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                transition: 'all 0.3s ease',
+                border: '1px solid #e9ecef',
+                cursor: 'pointer',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-5px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
               }}>
-                ⚙️ Panel Admin
-              </h3>
-              <p style={{
-                fontSize: config.cardTextSize,
-                color: '#666',
-                margin: 0,
-                lineHeight: '1.5',
-                flex: 1
-              }}>
-                Gestiona usuarios, torneos y reservas
-              </p>
-            </div>
-          </Link>
+                <h3 style={{
+                  fontSize: config.cardTitleSize,
+                  fontWeight: 'bold',
+                  color: '#333',
+                  margin: '0 0 10px 0'
+                }}>
+                  ⚙️ Panel Admin
+                </h3>
+                <p style={{
+                  fontSize: config.cardTextSize,
+                  color: '#666',
+                  margin: 0,
+                  lineHeight: '1.5',
+                  flex: 1
+                }}>
+                  Gestiona usuarios, torneos y reservas
+                </p>
+              </div>
+            </Link>
+          )}
         </div>
       </div>
     </div>
