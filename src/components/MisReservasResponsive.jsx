@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { cancelarReserva as cancelarReservaAPI } from '../utils/api';
+import { cancelarReserva as cancelarReservaAPI, obtenerMisReservas } from '../utils/api';
 
 const MisReservasResponsive = () => {
   const [reservas, setReservas] = useState([]);
@@ -33,15 +33,27 @@ const MisReservasResponsive = () => {
         const usuarioData = JSON.parse(usuarioGuardado);
         console.log('Datos del usuario en MisReservas:', usuarioData);
         setUsuario(usuarioData);
-        const userId = usuarioData.user?.id || usuarioData.id;
+        
+        // Obtener el ID del usuario con múltiples intentos
+        const userId = usuarioData.user?.id || usuarioData.id || usuarioData.user_id || usuarioData.usuario_id || usuarioData.ID || usuarioData.userId;
         console.log('ID del usuario extraído:', userId);
+        
+        if (!userId) {
+          console.error('No se pudo obtener el ID del usuario. Estructura de datos:', usuarioData);
+          setMessage('Error: No se pudo obtener el ID del usuario');
+          setLoading(false);
+          return;
+        }
+        
         cargarReservas(userId);
       } catch (error) {
         console.error('Error al parsear datos del usuario:', error);
         setMessage('Error al cargar datos del usuario');
+        setLoading(false);
       }
     } else {
       setMessage('Debes iniciar sesión para ver tus reservas');
+      setLoading(false);
     }
   }, []);
 
@@ -49,20 +61,17 @@ const MisReservasResponsive = () => {
     try {
       setLoading(true);
       console.log('Cargando reservas para usuario:', usuarioId);
-      const response = await fetch('/api/mis_reservas.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          usuario_id: usuarioId
-        })
-      });
-
-      const data = await response.json();
+      
+      const data = await obtenerMisReservas(usuarioId);
       console.log('Respuesta de reservas:', data);
 
       if (data.status === 'ok') {
+        console.log('Reservas recibidas:', data.reservas);
+        // Debug: mostrar estructura de cada reserva
+        if (data.reservas && data.reservas.length > 0) {
+          console.log('Estructura de la primera reserva:', data.reservas[0]);
+          console.log('Campos disponibles en reserva:', Object.keys(data.reservas[0]));
+        }
         setReservas(data.reservas || []);
       } else {
         console.error('Error en respuesta de reservas:', data);
@@ -88,11 +97,21 @@ const MisReservasResponsive = () => {
   };
 
   const obtenerNombreCancha = (canchaId) => {
+    // Debug: mostrar el valor recibido
+    console.log('obtenerNombreCancha recibió:', canchaId, 'tipo:', typeof canchaId);
+    
     const canchas = {
       1: 'Cancha 1',
       2: 'Cancha 2',
       3: 'Cancha 3'
     };
+    
+    // Si canchaId es undefined, null o vacío, mostrar mensaje de error
+    if (canchaId === undefined || canchaId === null || canchaId === '') {
+      console.warn('Cancha ID es undefined/null/vacío:', canchaId);
+      return 'Cancha no especificada';
+    }
+    
     return canchas[canchaId] || `Cancha ${canchaId}`;
   };
 
@@ -110,7 +129,7 @@ const MisReservasResponsive = () => {
       setCancelandoReserva(reservaId);
       setMessage('');
 
-      const usuarioId = usuario.user?.id || usuario.id;
+      const usuarioId = usuario.user?.id || usuario.id || usuario.user_id || usuario.usuario_id || usuario.ID || usuario.userId;
       
       const data = await cancelarReservaAPI(usuarioId, reservaId);
 
@@ -274,7 +293,12 @@ const MisReservasResponsive = () => {
             gridTemplateColumns: config.gridColumns,
             gap: config.gridGap
           }}>
-            {reservas.map((reserva, index) => (
+            {reservas.map((reserva, index) => {
+              // Debug: mostrar datos de cada reserva
+              console.log(`Reserva ${index}:`, reserva);
+              console.log(`Cancha fields - cancha: ${reserva.cancha}, cancha_id: ${reserva.cancha_id}, id_cancha: ${reserva.id_cancha}`);
+              
+              return (
               <div key={reserva.id || index} style={{
                 backgroundColor: 'white',
                 borderRadius: '15px',
@@ -303,7 +327,7 @@ const MisReservasResponsive = () => {
                     color: '#333',
                     margin: 0
                   }}>
-                    {obtenerNombreCancha(reserva.cancha)}
+                    {obtenerNombreCancha(reserva.cancha || reserva.cancha_id || reserva.id_cancha)}
                   </h3>
                   <span style={{
                     backgroundColor: '#007bff',
@@ -441,7 +465,8 @@ const MisReservasResponsive = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div style={{
