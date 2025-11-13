@@ -104,15 +104,31 @@ const NavbarResponsive = () => {
         </>
       )}
       
-      {/* Vista para administradores - Solo Admin */}
+      {/* Vista para administradores - Secciones de gestión */}
       {esAdmin && (
-        <NavLink 
-          to="/admin" 
-          className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-          onClick={closeMobileMenu}
-        >
-          Admin
-        </NavLink>
+        <>
+          <NavLink 
+            to="/admin?section=usuarios" 
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            onClick={closeMobileMenu}
+          >
+            Gestión de Usuarios
+          </NavLink>
+          <NavLink 
+            to="/admin?section=reservas" 
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            onClick={closeMobileMenu}
+          >
+            Gestión de Reservas
+          </NavLink>
+          <NavLink 
+            to="/admin?section=torneos" 
+            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            onClick={closeMobileMenu}
+          >
+            Gestión de Torneos
+          </NavLink>
+        </>
       )}
       
       {/* Botón de cerrar sesión para todos los usuarios logueados */}
